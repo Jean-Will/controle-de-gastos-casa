@@ -26,9 +26,9 @@ Os dados ainda não são persistidos. Ou seja, ao fechar o app, as informações
 
 ⚙️ Como executar o projeto
 Clone o repositório:
-git clone <URL_DO_REPOSITORIO>
+git clone <(https://github.com/Jean-Will/controle-de-gastos-casa.git)>
 Acesse a pasta:
-cd nome-do-projeto
+cd nome-do-projeto <controle-de-gastos-casa>
 Instale as dependências:
 npm install
 Inicie o projeto:
