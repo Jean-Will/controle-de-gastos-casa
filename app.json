@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "controle-de-gastos-casa",
-    "slug": "controle-de-gastos-casa",
+    "slug": "controle-de-gastos-casa-v1",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -22,7 +22,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.jean_will.controledegastoscasav1"
     },
     "web": {
       "bundler": "metro",
@@ -34,6 +35,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "98a11fee-c07f-4344-b345-3e4bb2718301"
+      }
     }
   }
 }
