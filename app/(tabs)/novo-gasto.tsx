@@ -1,15 +1,28 @@
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CategoriaChips } from '@/components/CategoriaChips';
+import { ConfirmacaoModal } from '@/components/ConfirmacaoModal';
 import { useGastos } from '@/components/GastosContext';
+import { TextoModal } from '@/components/TextoModal';
 
 export default function NovoGastoScreen() {
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
   const [categoria, setCategoria] = useState('Selecione uma categoria');
+  const [modalNovaCategoria, setModalNovaCategoria] = useState(false);
+  const [nomeNovaCategoria, setNomeNovaCategoria] = useState('');
+  const [categoriaParaExcluir, setCategoriaParaExcluir] = useState<string | null>(null);
 
-  const { adicionarGasto } = useGastos();
+  const {
+    adicionarGasto,
+    adicionarCategoria,
+    excluirCategoria,
+    categorias,
+    contarGastosDaCategoria,
+    possuiOrcamento,
+  } = useGastos();
 
   function handleSalvarGasto() {
     if (!descricao.trim()) {
@@ -47,9 +60,69 @@ export default function NovoGastoScreen() {
     Alert.alert('Sucesso', 'Gasto adicionado com sucesso.');
   }
 
+  function handleCriarCategoria() {
+    const sucesso = adicionarCategoria(nomeNovaCategoria);
+
+    if (!sucesso) {
+      Alert.alert(
+        'Atenção',
+        'Informe um nome válido. Categorias duplicadas não são permitidas.'
+      );
+      return;
+    }
+
+    setCategoria(nomeNovaCategoria.trim());
+    setNomeNovaCategoria('');
+    setModalNovaCategoria(false);
+  }
+
+  function handleSolicitarExclusaoCategoria(nome: string) {
+    setCategoriaParaExcluir(nome);
+  }
+
+  function confirmarExclusaoCategoria() {
+    if (!categoriaParaExcluir) {
+      return;
+    }
+
+    excluirCategoria(categoriaParaExcluir);
+
+    if (categoria === categoriaParaExcluir) {
+      setCategoria('Selecione uma categoria');
+    }
+
+    setCategoriaParaExcluir(null);
+  }
+
+  function obterMensagemExclusaoCategoria(): string {
+    if (!categoriaParaExcluir) {
+      return '';
+    }
+
+    const quantidadeGastos = contarGastosDaCategoria(categoriaParaExcluir);
+    const temOrcamento = possuiOrcamento(categoriaParaExcluir);
+    const partes: string[] = [
+      `Deseja excluir a categoria "${categoriaParaExcluir}"?`,
+    ];
+
+    if (quantidadeGastos > 0) {
+      partes.push(
+        `\n\nEsta categoria possui ${quantidadeGastos} gasto(s) associado(s). Os registros serão mantidos no histórico com o nome "${categoriaParaExcluir}", mas a categoria deixará de aparecer na lista.`
+      );
+    }
+
+    if (temOrcamento) {
+      partes.push(
+        '\n\nA reserva/orçamento desta categoria também será removida e o valor restante será devolvido ao saldo principal.'
+      );
+    }
+
+    return partes.join('');
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Novo gasto</Text>
         <Text style={styles.subtitle}>Adicione uma despesa da casa.</Text>
 
@@ -76,40 +149,58 @@ export default function NovoGastoScreen() {
           </View>
 
           <View>
-            <Text style={styles.label}>Categoria</Text>
-
-            <View style={styles.categoriesContainer}>
-              {['Alimentação', 'Energia', 'Internet', 'Transporte'].map((item) => {
-                const selecionada = categoria === item;
-
-                return (
-                  <TouchableOpacity
-                    key={item}
-                    style={[
-                      styles.categoryButton,
-                      selecionada && styles.categoryButtonActive,
-                    ]}
-                    onPress={() => setCategoria(item)}
-                  >
-                    <Text
-                      style={[
-                        styles.categoryButtonText,
-                        selecionada && styles.categoryButtonTextActive,
-                      ]}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+            <View style={styles.categoriaHeader}>
+              <Text style={styles.label}>Categoria</Text>
+              <TouchableOpacity
+                style={styles.botaoNovaCategoria}
+                onPress={() => setModalNovaCategoria(true)}
+              >
+                <Text style={styles.botaoNovaCategoriaTexto}>+ Nova categoria</Text>
+              </TouchableOpacity>
             </View>
+
+            <CategoriaChips
+              categorias={categorias}
+              selecionada={categoria !== 'Selecione uma categoria' ? categoria : undefined}
+              onSelecionar={setCategoria}
+              onExcluir={handleSolicitarExclusaoCategoria}
+            />
+
+            <Text style={styles.dicaCategoria}>
+              Toque no ícone vermelho para excluir categorias personalizadas.
+            </Text>
           </View>
 
           <TouchableOpacity style={styles.button} onPress={handleSalvarGasto}>
             <Text style={styles.buttonText}>Salvar gasto</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
+
+      <TextoModal
+        visivel={modalNovaCategoria}
+        titulo="Nova categoria"
+        descricao="Crie uma categoria personalizada para os seus gastos."
+        placeholder="Ex: Saúde, Animais, Educação"
+        valor={nomeNovaCategoria}
+        onChangeValor={setNomeNovaCategoria}
+        onConfirmar={handleCriarCategoria}
+        onCancelar={() => {
+          setModalNovaCategoria(false);
+          setNomeNovaCategoria('');
+        }}
+        textoConfirmar="Criar"
+      />
+
+      <ConfirmacaoModal
+        visivel={categoriaParaExcluir !== null}
+        titulo="Excluir categoria"
+        descricao={obterMensagemExclusaoCategoria()}
+        textoConfirmar="Excluir"
+        confirmarDestrutivo
+        onConfirmar={confirmarExclusaoCategoria}
+        onCancelar={() => setCategoriaParaExcluir(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -122,6 +213,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     gap: 20,
+    paddingBottom: 32,
   },
   title: {
     fontSize: 28,
@@ -138,11 +230,32 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 16,
   },
+  categoriaHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   label: {
     fontSize: 14,
     fontWeight: '600',
     color: '#374151',
-    marginBottom: 8,
+  },
+  botaoNovaCategoria: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  botaoNovaCategoriaTexto: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2563EB',
+  },
+  dicaCategoria: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 8,
   },
   input: {
     backgroundColor: '#F3F4F6',
@@ -151,28 +264,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: '#111827',
-  },
-  categoriesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  categoryButton: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  categoryButtonActive: {
-    backgroundColor: '#DBEAFE',
-  },
-  categoryButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  categoryButtonTextActive: {
-    color: '#1D4ED8',
   },
   button: {
     backgroundColor: '#2563EB',

@@ -1,15 +1,9 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useGastos } from '@/components/GastosContext';
+import { formatarMoeda } from '@/utils/formatarMoeda';
 
-const formatarMoeda = (valor: number) => {
-  return new Intl.NumberFormat('pt-PT', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(valor);
-};
-
-export default function ResumoScreen() {
+export default function GastosScreen() {
   const { gastos } = useGastos();
 
   const totalGasto = gastos.reduce((total, gasto) => total + gasto.valor, 0);
@@ -22,8 +16,8 @@ export default function ResumoScreen() {
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <>
-            <Text style={styles.title}>Resumo da casa</Text>
-            <Text style={styles.subtitle}>Veja os seus gastos principais.</Text>
+            <Text style={styles.title}>Gastos</Text>
+            <Text style={styles.subtitle}>Lista de todos os gastos cadastrados.</Text>
 
             <View style={styles.card}>
               <Text style={styles.cardLabel}>Total gasto</Text>

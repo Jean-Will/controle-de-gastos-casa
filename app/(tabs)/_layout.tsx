@@ -18,15 +18,23 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      initialRouteName="saldo"
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: useClientOnlyValue(false, true),
       }}>
       <Tabs.Screen
+        name="saldo"
+        options={{
+          title: 'Saldo',
+          tabBarIcon: ({ color }) => <TabBarIcon name="money" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="index"
         options={{
-          title: 'Resumo',
-          tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
+          title: 'Gastos',
+          tabBarIcon: ({ color }) => <TabBarIcon name="list" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -38,6 +46,13 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="integracoes"
+        options={{
+          title: 'Integrações',
+          tabBarIcon: ({ color }) => <TabBarIcon name="plug" color={color} />,
+        }}
+      />  
     </Tabs>
   );
 }
